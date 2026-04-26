@@ -1,14 +1,11 @@
 package ui.account
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -17,17 +14,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.miniprojet.ui.auth.AuthUiState
 import ui.dicePages.AddDicePage
 import ui.dicePages.CustomizeDicePage
+import ui.dicePages.MyDicePage
 import ui.dicePages.RemoveDicePage
 import ui.dicePages.ThrowDicePage
 
@@ -35,11 +32,10 @@ import ui.dicePages.ThrowDicePage
 fun DiceOptionsScreen(
     uiState: AuthUiState,
     navController: NavController,
-    modifier: Modifier = Modifier,
-    )
-{
-
+    modifier: Modifier = Modifier
+) {
     val navItemList = listOf(
+        NavItem("Mes dés", Icons.Default.List),
         NavItem("Ajouter dés", Icons.Default.Add),
         NavItem("Enlever dés", Icons.Default.Clear),
         NavItem("Modifier dés", Icons.Default.Create),
@@ -49,6 +45,7 @@ fun DiceOptionsScreen(
     var selectedIndex by remember {
         mutableStateOf(0)
     }
+
     Scaffold(
         bottomBar = {
             NavigationBar(
@@ -56,12 +53,15 @@ fun DiceOptionsScreen(
             ) {
                 navItemList.forEachIndexed { index, navItem ->
                     NavigationBarItem(
-                        selected = index==selectedIndex,
+                        selected = index == selectedIndex,
                         onClick = {
                             selectedIndex = index
                         },
                         icon = {
-                            Icon(imageVector = navItem.icon, contentDescription = navItem.label)
+                            Icon(
+                                imageVector = navItem.icon,
+                                contentDescription = navItem.label
+                            )
                         },
                         label = {
                             Text(text = navItem.label)
@@ -70,25 +70,29 @@ fun DiceOptionsScreen(
                 }
             }
         }
-    ) {
-        ContentScreen(modifier = modifier.padding(it), selectedIndex)
+    ) { innerPadding ->
+        ContentScreen(
+            modifier = modifier.padding(innerPadding),
+            selectedIndex = selectedIndex
+        )
     }
 }
 
 @Composable
-fun ContentScreen(modifier: Modifier = Modifier, selectedIndex : Int) {
+fun ContentScreen(
+    modifier: Modifier = Modifier,
+    selectedIndex: Int
+) {
     when (selectedIndex) {
-        0 -> AddDicePage(modifier)
-        1 -> RemoveDicePage(modifier)
-        2 -> CustomizeDicePage(modifier)
-        3 -> ThrowDicePage(modifier)
+        0 -> MyDicePage(modifier)
+        1 -> AddDicePage(modifier)
+        2 -> RemoveDicePage(modifier)
+        3 -> CustomizeDicePage(modifier)
+        4 -> ThrowDicePage(modifier)
     }
 }
 
-data class NavItem (
-    val label : String,
-    val icon : ImageVector
+data class NavItem(
+    val label: String,
+    val icon: ImageVector
 )
-
-// Icons :
-// Icons.Default.Add   Icons.Default.Clear   Icons.Default.Create   Icons.Default.PlayArrow

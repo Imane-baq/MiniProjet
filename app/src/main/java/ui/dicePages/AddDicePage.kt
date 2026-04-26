@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -18,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,16 +39,18 @@ import domain.model.DiceFace
 
 @Composable
 fun AddDicePage(modifier: Modifier = Modifier) {
-
     var diceName by remember { mutableStateOf("") }
     var numberOfSides by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val diceFaces = remember { mutableStateListOf<DiceFace>() }
+
     val db = Firebase.firestore
-    val user = FirebaseAuth.getInstance().currentUser
-    val uId = user?.uid
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
     val context = LocalContext.current
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color(0xFF2B1D14))
             .padding(24.dp),
@@ -75,6 +80,7 @@ fun AddDicePage(modifier: Modifier = Modifier) {
                     label = { Text("Nom du nouveau dé") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 OutlinedTextField(
                     value = numberOfSides,
                     onValueChange = { newValue ->
@@ -89,26 +95,110 @@ fun AddDicePage(modifier: Modifier = Modifier) {
 
                 Button(
                     onClick = {
-                        if(diceName.isNotEmpty() && uId != null && numberOfSides.isNotEmpty() && numberOfSides.toInt() >=4 && numberOfSides.toInt() <= 20) {
-                            val mutDiceFaces = mutableListOf<DiceFace>()
-                            for(i in 1..numberOfSides.toInt()) {
-                                val face = DiceFace(i.toString(), 1) //Default face value is the number of the face, weight is 1
-                                mutDiceFaces.add(face)
-                            }
-                            val diceFaces = mutDiceFaces.toList()
-                            val name = diceName
-                            val dice = Dice(uId, name, numberOfSides.toInt(), diceFaces )
-                            db.collection("dices").add(dice)
-                                .addOnSuccessListener { documentReference ->
-                                    Log.d("Firestore", "Dice added with ID: ${documentReference.id}")
-                                    Toast.makeText(context, "Dice Added with ID: ${documentReference.id}", Toast.LENGTH_SHORT).show()
-                                }
-                                .addOnFailureListener { e ->
-                                    Log.w("Firestore", "Error adding Dice", e)
-                                    Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                                }
+                        val faceCount = numberOfSides.toIntOrNull()
 
+                        if (faceCount == null || faceCount !in 4..20) {
+                            errorMessage = "Le nombre de faces doit être entre 4 et 20."
+                            return@Button
                         }
+
+                        diceFaces.clear()
+
+                        repeat(faceCount) { index ->
+                            diceFaces.add(
+                                DiceFace(
+                                    faceValue = (index + 1).toString(),
+                                    faceWeight = 1
+                                )
+                            )
+                        }
+
+                        errorMessage = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF3B2416)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Configurer les faces")
+                }
+
+                if (diceFaces.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f, fill = false),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(diceFaces) { index, face ->
+                            FaceEditor(
+                                index = index,
+                                face = face,
+                                onValueChange = { newValue ->
+                                    diceFaces[index] = face.copy(faceValue = newValue)
+                                },
+                                onWeightChange = { newWeight ->
+                                    diceFaces[index] = face.copy(faceWeight = newWeight)
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        if (diceName.isBlank()) {
+                            errorMessage = "Le nom du dé est obligatoire."
+                            return@Button
+                        }
+
+                        if (userId == null) {
+                            errorMessage = "Utilisateur non connecté."
+                            return@Button
+                        }
+
+                        if (diceFaces.isEmpty()) {
+                            val faceCount = numberOfSides.toIntOrNull()
+
+                            if (faceCount == null || faceCount !in 4..20) {
+                                errorMessage = "Le nombre de faces doit être entre 4 et 20."
+                                return@Button
+                            }
+
+                            repeat(faceCount) { index ->
+                                diceFaces.add(
+                                    DiceFace(
+                                        faceValue = (index + 1).toString(),
+                                        faceWeight = 1
+                                    )
+                                )
+                            }
+                        }
+
+                        val dice = Dice(
+                            userId = userId,
+                            diceName = diceName.trim(),
+                            diceWeight = diceFaces.size,
+                            diceFaces = diceFaces.toList()
+                        )
+
+                        db.collection("dices")
+                            .add(dice)
+                            .addOnSuccessListener { documentReference ->
+                                Log.d("Firestore", "Dice added with ID: ${documentReference.id}")
+                                Toast.makeText(
+                                    context,
+                                    "Dé ajouté avec succès",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                diceName = ""
+                                numberOfSides = ""
+                                diceFaces.clear()
+                                errorMessage = null
+                            }
+                            .addOnFailureListener { exception ->
+                                Log.w("Firestore", "Error adding Dice", exception)
+                                errorMessage = exception.message
+                            }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF7B3F00)
@@ -117,7 +207,60 @@ fun AddDicePage(modifier: Modifier = Modifier) {
                 ) {
                     Text("Ajouter le dé")
                 }
+
+                errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = Color(0xFF8B0000)
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun FaceEditor(
+    index: Int,
+    face: DiceFace,
+    onValueChange: (String) -> Unit,
+    onWeightChange: (Int) -> Unit
+) {
+    Card(
+        shape = CutCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE8B95E)
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Face ${index + 1}",
+                color = Color(0xFF3B2416),
+                fontFamily = FontFamily.Serif
+            )
+
+            OutlinedTextField(
+                value = face.faceValue,
+                onValueChange = onValueChange,
+                label = { Text("Valeur de la face") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = face.faceWeight.toString(),
+                onValueChange = { newValue ->
+                    if (newValue.all { it.isDigit() }) {
+                        onWeightChange(newValue.toIntOrNull() ?: 1)
+                    }
+                },
+                label = { Text("Poids / chance") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
