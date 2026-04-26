@@ -1,8 +1,10 @@
 package domain.model
 
+import com.google.firebase.firestore.PropertyName
+
 data class Dice(
-    val userId: String = "",
-    var diceName: String = "",
-    var diceWeight: Int = 0,
-    var diceFaces: List<DiceFace> = emptyList()
+    @get:PropertyName("userId") @set:PropertyName("userId") var userId: String = "",
+    @get:PropertyName("diceName") @set:PropertyName("diceName") var diceName: String = "",
+    @get:PropertyName("diceWeight") @set:PropertyName("diceWeight") var diceWeight: Int = 0,
+    @get:PropertyName("diceFaces") @set:PropertyName("diceFaces") var diceFaces: List<DiceFace> = emptyList()
 )

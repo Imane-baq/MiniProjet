@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CutCornerShape
@@ -26,6 +27,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -152,6 +154,13 @@ fun CustomizeDicePage(modifier: Modifier = Modifier) {
             return
         }
 
+        // Validation : Poids uniques
+        val weights = editableFaces.map { it.faceWeight }
+        if (weights.size != weights.distinct().size) {
+            message = "Chaque face doit avoir un poids unique."
+            return
+        }
+
         val updatedDice = Dice(
             userId = userId,
             diceName = diceName.trim(),
@@ -201,7 +210,7 @@ fun CustomizeDicePage(modifier: Modifier = Modifier) {
 
         if (diceDocuments.isEmpty()) {
             EmptyCustomizeMessage()
-        } else {
+        } else if (selectedDocumentId == null) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f, fill = false)
@@ -222,24 +231,21 @@ fun CustomizeDicePage(modifier: Modifier = Modifier) {
             EditDiceForm(
                 diceName = diceName,
                 numberOfFaces = numberOfFaces,
-                onDiceNameChange = { diceName = it },
-                onNumberOfFacesChange = { updateNumberOfFaces(it) },
+                onDiceNameChange = { diceName = it; message = null },
+                onNumberOfFacesChange = { updateNumberOfFaces(it); message = null },
                 faces = editableFaces,
-                onFaceValueChange = { index, value ->
-                    editableFaces[index] = editableFaces[index].copy(faceValue = value)
-                },
                 onFaceWeightChange = { index, weight ->
                     editableFaces[index] = editableFaces[index].copy(faceWeight = weight)
+                    message = null 
                 },
+                errorMessage = message,
                 onSave = { saveDice() }
             )
         }
-
-        message?.let {
-            Text(
-                text = it,
-                color = Color(0xFFF4D27A)
-            )
+        
+        // Message général (ex: erreur de chargement) si pas dans le formulaire
+        if (selectedDocumentId == null && message != null) {
+            Text(text = message!!, color = Color(0xFFF4D27A))
         }
     }
 }
@@ -326,8 +332,8 @@ private fun EditDiceForm(
     onDiceNameChange: (String) -> Unit,
     onNumberOfFacesChange: (String) -> Unit,
     faces: List<DiceFace>,
-    onFaceValueChange: (Int, String) -> Unit,
     onFaceWeightChange: (Int, Int) -> Unit,
+    errorMessage: String?,
     onSave: () -> Unit
 ) {
     Card(
@@ -347,6 +353,15 @@ private fun EditDiceForm(
                 fontFamily = FontFamily.Serif,
                 color = Color(0xFF3B2416)
             )
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = Color(0xFFB00020), // Rouge vif pour les erreurs
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
 
             OutlinedTextField(
                 value = diceName,
@@ -371,9 +386,6 @@ private fun EditDiceForm(
                     FaceEditCard(
                         index = index,
                         face = faces[index],
-                        onFaceValueChange = { value ->
-                            onFaceValueChange(index, value)
-                        },
                         onFaceWeightChange = { weight ->
                             onFaceWeightChange(index, weight)
                         }
@@ -398,9 +410,12 @@ private fun EditDiceForm(
 private fun FaceEditCard(
     index: Int,
     face: DiceFace,
-    onFaceValueChange: (String) -> Unit,
     onFaceWeightChange: (Int) -> Unit
 ) {
+    var weightText by remember(face.faceWeight) { 
+        mutableStateOf(if (face.faceWeight == 0) "" else face.faceWeight.toString()) 
+    }
+
     Card(
         shape = CutCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -408,33 +423,32 @@ private fun FaceEditCard(
         ),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
+        Row(
             modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Face ${index + 1}",
+                text = "Face ${face.faceValue}",
+                modifier = Modifier.weight(1f),
                 fontFamily = FontFamily.Serif,
-                color = Color(0xFF3B2416)
+                color = Color(0xFF3B2416),
+                style = MaterialTheme.typography.titleMedium
             )
 
             OutlinedTextField(
-                value = face.faceValue,
-                onValueChange = onFaceValueChange,
-                label = { Text("Valeur") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = face.faceWeight.toString(),
+                value = weightText,
                 onValueChange = { newValue ->
-                    if (newValue.all { it.isDigit() }) {
+                    if (newValue.isEmpty()) {
+                        weightText = ""
+                        onFaceWeightChange(0)
+                    } else if (newValue.all { it.isDigit() }) {
+                        weightText = newValue
                         onFaceWeightChange(newValue.toIntOrNull() ?: 1)
                     }
                 },
-                label = { Text("Poids / chance") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                label = { Text("Poids") },
+                modifier = Modifier.width(100.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
         }
     }

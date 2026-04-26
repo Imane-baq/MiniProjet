@@ -31,11 +31,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import domain.model.Dice
+import domain.model.DiceFace
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
-import domain.model.Dice
-import domain.model.DiceFace
 
 @Composable
 fun AddDicePage(modifier: Modifier = Modifier) {
