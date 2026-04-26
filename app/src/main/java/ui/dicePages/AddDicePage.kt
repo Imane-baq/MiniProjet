@@ -38,7 +38,7 @@ import domain.model.DiceFace
 fun AddDicePage(modifier: Modifier = Modifier) {
 
     var diceName by remember { mutableStateOf("") }
-    var numberOfSides by remember { mutableStateOf("4") }
+    var numberOfSides by remember { mutableStateOf("") }
     val db = Firebase.firestore
     val user = FirebaseAuth.getInstance().currentUser
     val uId = user?.uid
@@ -79,10 +79,7 @@ fun AddDicePage(modifier: Modifier = Modifier) {
                     value = numberOfSides,
                     onValueChange = { newValue ->
                         if (newValue.all { it.isDigit() }) {
-                            val intValue = newValue.toIntOrNull()
-                            if (intValue != null && intValue <= 20) {
-                                numberOfSides = newValue
-                            }
+                            numberOfSides = newValue
                         }
                     },
                     label = { Text("Nombre de faces (4-20)") },
@@ -92,8 +89,7 @@ fun AddDicePage(modifier: Modifier = Modifier) {
 
                 Button(
                     onClick = {
-                        if(diceName.isNotEmpty() && uId != null) {
-
+                        if(diceName.isNotEmpty() && uId != null && numberOfSides.isNotEmpty() && numberOfSides.toInt() >=4 && numberOfSides.toInt() <= 20) {
                             val mutDiceFaces = mutableListOf<DiceFace>()
                             for(i in 1..numberOfSides.toInt()) {
                                 val face = DiceFace(i.toString(), 1) //Default face value is the number of the face, weight is 1
