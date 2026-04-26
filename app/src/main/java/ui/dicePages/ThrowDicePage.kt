@@ -1,0 +1,10 @@
+package ui.dicePages
+
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+
+@Composable
+fun ThrowDicePage(modifier: Modifier = Modifier) {
+    Text(text = "Lancer des dés ici")
+}

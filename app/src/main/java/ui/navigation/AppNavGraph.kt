@@ -12,6 +12,7 @@ import com.example.miniprojet.ui.account.AccountScreen
 import com.example.miniprojet.ui.auth.AuthViewModel
 import com.example.miniprojet.ui.auth.LoginScreen
 import com.example.miniprojet.ui.auth.RegisterScreen
+import ui.account.DiceOptionsScreen
 
 @Composable
 fun AppNavGraph() {
@@ -70,8 +71,21 @@ fun AppNavGraph() {
                     navController.navigate(Routes.Login) {
                         popUpTo(Routes.Account) { inclusive = true }
                     }
+                },
+                onGoToDiceOptions = {
+                    navController.navigate(Routes.DiceOptions) {
+                        popUpTo(Routes.Account) { inclusive = true }
+                    }
                 }
             )
         }
+
+        composable(Routes.DiceOptions) {
+            DiceOptionsScreen(
+                uiState = uiState,
+                navController,
+            )
+        }
+
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.example.miniprojet.ui.auth.AuthUiState
@@ -23,10 +24,11 @@ import com.example.miniprojet.ui.auth.AuthUiState
 @Composable
 fun AccountScreen(
     uiState: AuthUiState,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onGoToDiceOptions: () -> Unit
 ) {
     val user = uiState.user
-
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -54,6 +56,16 @@ fun AccountScreen(
 
                 Text("Nom : ${user?.name ?: "Chargement..."}")
                 Text("Email : ${user?.email ?: "Chargement..."}")
+
+                Button(
+                    onClick = onGoToDiceOptions,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF7B3F00)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Voir mes dés")
+                }
 
                 Button(
                     onClick = onLogout,
