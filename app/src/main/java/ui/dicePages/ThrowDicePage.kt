@@ -20,9 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
@@ -95,7 +97,8 @@ fun ThrowDicePage(modifier: Modifier = Modifier) {
         DiceStage(
             selectedDice = selectedDice,
             result = result,
-            animationTrigger = rollAnimationTrigger
+            animationTrigger = rollAnimationTrigger,
+            modifier = Modifier.weight(1f)
         )
 
         if (diceList.isEmpty()) {
@@ -122,7 +125,7 @@ private fun Header(message: String) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
@@ -135,7 +138,9 @@ private fun Header(message: String) {
 
             Text(
                 text = message,
-                color = LightParchment
+                color = LightParchment,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -145,22 +150,24 @@ private fun Header(message: String) {
 private fun DiceStage(
     selectedDice: Dice?,
     result: String?,
-    animationTrigger: Int
+    animationTrigger: Int,
+    modifier: Modifier = Modifier
 ) {
     Card(
         shape = CutCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = Parchment),
         elevation = CardDefaults.cardElevation(10.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp)
+            .padding(vertical = 12.dp)
+            .heightIn(min = 260.dp)
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(22.dp),
+                .fillMaxSize()
+                .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+            verticalArrangement = Arrangement.Center
         ) {
             if (selectedDice == null) {
                 Text(
@@ -180,7 +187,9 @@ private fun DiceStage(
                     style = MaterialTheme.typography.headlineSmall,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    color = BoardBrown
+                    color = BoardBrown,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Text(
@@ -210,28 +219,22 @@ private fun AnimatedDice(
     result: String?,
     animationTrigger: Int
 ) {
-    val rotationX by animateFloatAsState(
-        targetValue = animationTrigger * 720f,
-        animationSpec = tween(durationMillis = 900),
-        label = "rotationX"
-    )
-
-    val rotationY by animateFloatAsState(
-        targetValue = animationTrigger * 540f,
-        animationSpec = tween(durationMillis = 900),
-        label = "rotationY"
-    )
-
-    val rotationZ by animateFloatAsState(
-        targetValue = animationTrigger * 1080f,
-        animationSpec = tween(durationMillis = 900),
-        label = "rotationZ"
+    val tilt by animateFloatAsState(
+        targetValue = if (animationTrigger % 2 == 0) -8f else 8f,
+        animationSpec = tween(durationMillis = 350),
+        label = "tilt"
     )
 
     val jump by animateFloatAsState(
-        targetValue = if (animationTrigger % 2 == 0) 0f else -70f,
-        animationSpec = tween(durationMillis = 450),
+        targetValue = if (animationTrigger % 2 == 0) 0f else -45f,
+        animationSpec = tween(durationMillis = 350),
         label = "jump"
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = if (animationTrigger % 2 == 0) 1f else 1.08f,
+        animationSpec = tween(durationMillis = 350),
+        label = "scale"
     )
 
     Box(
@@ -240,21 +243,20 @@ private fun AnimatedDice(
     ) {
         Box(
             modifier = Modifier
-                .size(150.dp)
+                .size(145.dp)
                 .graphicsLayer {
-                    this.rotationX = rotationX
-                    this.rotationY = rotationY
-                    this.rotationZ = rotationZ
+                    rotationZ = tilt
                     translationY = jump
-                    cameraDistance = 14f * density
-                    shadowElevation = 26f
+                    scaleX = scale
+                    scaleY = scale
+                    shadowElevation = 24f
                     shape = CutCornerShape(24.dp)
                     clip = false
                 }
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFFFFF7CF),
+                            Color(0xFFFFFAE0),
                             Color(0xFFFFD978),
                             Gold
                         )
@@ -270,7 +272,7 @@ private fun AnimatedDice(
         ) {
             Text(
                 text = result ?: "🎲",
-                fontSize = 52.sp,
+                fontSize = 48.sp,
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 color = Red
@@ -285,9 +287,23 @@ private fun DicePicker(
     selectedDice: Dice?,
     onSelect: (Dice) -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp
+
+    val cardWidth = when {
+        screenWidth < 360 -> 185.dp
+        screenWidth < 420 -> 205.dp
+        else -> 225.dp
+    }
+
+    val cardHeight = when {
+        screenWidth < 360 -> 175.dp
+        else -> 165.dp
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
             text = "Tes dés",
@@ -305,6 +321,8 @@ private fun DicePicker(
                 DiceChoiceCard(
                     dice = dice,
                     isSelected = selectedDice?.diceName == dice.diceName,
+                    cardWidth = cardWidth,
+                    cardHeight = cardHeight,
                     onSelect = { onSelect(dice) }
                 )
             }
@@ -316,6 +334,8 @@ private fun DicePicker(
 private fun DiceChoiceCard(
     dice: Dice,
     isSelected: Boolean,
+    cardWidth: androidx.compose.ui.unit.Dp,
+    cardHeight: androidx.compose.ui.unit.Dp,
     onSelect: () -> Unit
 ) {
     Card(
@@ -324,10 +344,12 @@ private fun DiceChoiceCard(
             containerColor = if (isSelected) Gold else Parchment
         ),
         elevation = CardDefaults.cardElevation(if (isSelected) 10.dp else 4.dp),
-        modifier = Modifier.size(width = 190.dp, height = 130.dp)
+        modifier = Modifier.size(width = cardWidth, height = cardHeight)
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
@@ -336,14 +358,18 @@ private fun DiceChoiceCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    color = BoardBrown
+                    color = BoardBrown,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = "${dice.diceFaces.size} faces",
-                    color = Color(0xFF5C3B24)
+                    color = Color(0xFF5C3B24),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -352,9 +378,16 @@ private fun DiceChoiceCard(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isSelected) Red else BoardBrown
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Text(if (isSelected) "Sélectionné" else "Choisir")
+                Text(
+                    text = if (isSelected) "Sélectionné" else "Choisir",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
