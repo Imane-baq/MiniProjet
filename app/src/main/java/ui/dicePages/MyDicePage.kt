@@ -3,12 +3,15 @@ package ui.dicePages
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -26,7 +30,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import domain.model.Dice
 
 @Composable
-fun MyDicePage(modifier: Modifier = Modifier) {
+fun MyDicePage(
+    modifier: Modifier = Modifier,
+    onGoToAccount: () -> Unit
+) {
     val diceList = remember { mutableStateListOf<Dice>() }
     val userId = FirebaseAuth.getInstance().currentUser?.uid
     val db = FirebaseFirestore.getInstance()
@@ -55,12 +62,27 @@ fun MyDicePage(modifier: Modifier = Modifier) {
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Mes dés",
-            style = MaterialTheme.typography.headlineMedium,
-            fontFamily = FontFamily.Serif,
-            color = Color(0xFFF4D27A)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Mes dés",
+                style = MaterialTheme.typography.headlineMedium,
+                fontFamily = FontFamily.Serif,
+                color = Color(0xFFF4D27A)
+            )
+
+            Button(
+                onClick = onGoToAccount,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF7B3F00)
+                )
+            ) {
+                Text("Mon compte")
+            }
+        }
 
         if (diceList.isEmpty()) {
             Card(
@@ -117,7 +139,6 @@ private fun DiceCard(dice: Dice) {
                 fontFamily = FontFamily.Serif,
                 color = Color(0xFF3B2416)
             )
-
 
             Text(
                 text = "Nombre de faces : ${dice.diceFaces.size}",

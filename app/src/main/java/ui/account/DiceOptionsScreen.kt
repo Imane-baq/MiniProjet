@@ -73,7 +73,8 @@ fun DiceOptionsScreen(
     ) { innerPadding ->
         ContentScreen(
             modifier = modifier.padding(innerPadding),
-            selectedIndex = selectedIndex
+            selectedIndex = selectedIndex,
+            navController = navController
         )
     }
 }
@@ -81,10 +82,17 @@ fun DiceOptionsScreen(
 @Composable
 fun ContentScreen(
     modifier: Modifier = Modifier,
-    selectedIndex: Int
+    selectedIndex: Int,
+    navController: NavController
 ) {
     when (selectedIndex) {
-        0 -> MyDicePage(modifier)
+        0 -> MyDicePage(
+            modifier = modifier,
+            onGoToAccount = {
+                navController.navigate("account")
+            }
+        )
+
         1 -> AddDicePage(modifier)
         2 -> RemoveDicePage(modifier)
         3 -> CustomizeDicePage(modifier)
