@@ -352,7 +352,7 @@ private fun DicePicker(
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 8.dp)
+            contentPadding = PaddingValues(bottom = 0.dp)
         ) {
             items(diceList) { dice ->
                 DiceChoiceCard(
