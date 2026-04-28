@@ -89,7 +89,7 @@ fun ThrowDicePage(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .background(DarkWood)
-            .padding(16.dp),
+            .padding(12.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Header(message = message)
@@ -125,12 +125,12 @@ private fun Header(message: String) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = "Lancer un dé",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 color = Parchment
@@ -153,19 +153,33 @@ private fun DiceStage(
     animationTrigger: Int,
     modifier: Modifier = Modifier
 ) {
+    val screenHeight = LocalConfiguration.current.screenHeightDp
+
+    val diceSize = when {
+        screenHeight < 700 -> 155.dp
+        screenHeight < 800 -> 175.dp
+        else -> 190.dp
+    }
+
+    val fontSize = when {
+        screenHeight < 700 -> 38.sp
+        screenHeight < 800 -> 44.sp
+        else -> 48.sp
+    }
+
     Card(
         shape = CutCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = Parchment),
         elevation = CardDefaults.cardElevation(10.dp),
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp)
-            .heightIn(min = 260.dp)
+            .padding(vertical = 8.dp)
+            .heightIn(min = 230.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(18.dp),
+                .padding(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -184,7 +198,7 @@ private fun DiceStage(
             } else {
                 Text(
                     text = selectedDice.diceName,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     color = BoardBrown,
@@ -199,25 +213,47 @@ private fun DiceStage(
 
                 AnimatedDice(
                     result = result,
-                    animationTrigger = animationTrigger
+                    animationTrigger = animationTrigger,
+                    diceSize = diceSize,
+                    fontSize = fontSize
                 )
 
-                Text(
-                    text = "Résultat : ${result ?: "-"}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    color = Red
-                )
+                ResultCard(result = result)
             }
         }
     }
 }
 
 @Composable
+private fun ResultCard(result: String?) {
+    Card(
+        shape = CutCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = LightParchment),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+    ) {
+        Text(
+            text = "Résultat : ${result ?: "-"}",
+            style = MaterialTheme.typography.titleLarge,
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
+            color = Red,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .align(Alignment.CenterHorizontally)
+        )
+    }
+}
+
+@Composable
 private fun AnimatedDice(
     result: String?,
-    animationTrigger: Int
+    animationTrigger: Int,
+    diceSize: androidx.compose.ui.unit.Dp,
+    fontSize: androidx.compose.ui.unit.TextUnit
 ) {
     val tilt by animateFloatAsState(
         targetValue = if (animationTrigger % 2 == 0) -8f else 8f,
@@ -226,24 +262,24 @@ private fun AnimatedDice(
     )
 
     val jump by animateFloatAsState(
-        targetValue = if (animationTrigger % 2 == 0) 0f else -45f,
+        targetValue = if (animationTrigger % 2 == 0) 0f else -35f,
         animationSpec = tween(durationMillis = 350),
         label = "jump"
     )
 
     val scale by animateFloatAsState(
-        targetValue = if (animationTrigger % 2 == 0) 1f else 1.08f,
+        targetValue = if (animationTrigger % 2 == 0) 1f else 1.06f,
         animationSpec = tween(durationMillis = 350),
         label = "scale"
     )
 
     Box(
-        modifier = Modifier.size(190.dp),
+        modifier = Modifier.size(diceSize + 35.dp),
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .size(145.dp)
+                .size(diceSize)
                 .graphicsLayer {
                     rotationZ = tilt
                     translationY = jump
@@ -272,10 +308,12 @@ private fun AnimatedDice(
         ) {
             Text(
                 text = result ?: "🎲",
-                fontSize = 48.sp,
+                fontSize = fontSize,
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
-                color = Red
+                color = Red,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -287,8 +325,7 @@ private fun DicePicker(
     selectedDice: Dice?,
     onSelect: (Dice) -> Unit
 ) {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp
+    val screenWidth = LocalConfiguration.current.screenWidthDp
 
     val cardWidth = when {
         screenWidth < 360 -> 185.dp
