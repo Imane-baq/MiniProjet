@@ -161,6 +161,17 @@ fun CustomizeDicePage(modifier: Modifier = Modifier) {
             return
         }
 
+        // Validation : Valeurs de faces uniques
+        val faceValues = editableFaces.map { it.faceValue.trim() }
+        if (faceValues.any { it.isEmpty() }) {
+            message = "Toutes les faces doivent avoir une valeur."
+            return
+        }
+        if (faceValues.size != faceValues.distinct().size) {
+            message = "Chaque face doit avoir une valeur unique."
+            return
+        }
+
         val updatedDice = Dice(
             userId = userId,
             diceName = diceName.trim(),
@@ -234,6 +245,10 @@ fun CustomizeDicePage(modifier: Modifier = Modifier) {
                 onDiceNameChange = { diceName = it; message = null },
                 onNumberOfFacesChange = { updateNumberOfFaces(it); message = null },
                 faces = editableFaces,
+                onFaceValueChange = { index, value ->
+                    editableFaces[index] = editableFaces[index].copy(faceValue = value)
+                    message = null
+                },
                 onFaceWeightChange = { index, weight ->
                     editableFaces[index] = editableFaces[index].copy(faceWeight = weight)
                     message = null 
@@ -332,6 +347,7 @@ private fun EditDiceForm(
     onDiceNameChange: (String) -> Unit,
     onNumberOfFacesChange: (String) -> Unit,
     faces: List<DiceFace>,
+    onFaceValueChange: (Int, String) -> Unit,
     onFaceWeightChange: (Int, Int) -> Unit,
     errorMessage: String?,
     onSave: () -> Unit
@@ -386,6 +402,9 @@ private fun EditDiceForm(
                     FaceEditCard(
                         index = index,
                         face = faces[index],
+                        onFaceValueChange = { value ->
+                            onFaceValueChange(index, value)
+                        },
                         onFaceWeightChange = { weight ->
                             onFaceWeightChange(index, weight)
                         }
@@ -410,6 +429,7 @@ private fun EditDiceForm(
 private fun FaceEditCard(
     index: Int,
     face: DiceFace,
+    onFaceValueChange: (String) -> Unit,
     onFaceWeightChange: (Int) -> Unit
 ) {
     var weightText by remember(face.faceWeight) { 
@@ -425,14 +445,15 @@ private fun FaceEditCard(
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "Face ${face.faceValue}",
+            OutlinedTextField(
+                value = face.faceValue,
+                onValueChange = onFaceValueChange,
+                label = { Text("Valeur") },
                 modifier = Modifier.weight(1f),
-                fontFamily = FontFamily.Serif,
-                color = Color(0xFF3B2416),
-                style = MaterialTheme.typography.titleMedium
+                singleLine = true
             )
 
             OutlinedTextField(
@@ -448,7 +469,8 @@ private fun FaceEditCard(
                 },
                 label = { Text("Poids") },
                 modifier = Modifier.width(100.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
             )
         }
     }
