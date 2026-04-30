@@ -154,13 +154,6 @@ fun CustomizeDicePage(modifier: Modifier = Modifier) {
             return
         }
 
-        // Validation : Poids uniques
-        val weights = editableFaces.map { it.faceWeight }
-        if (weights.size != weights.distinct().size) {
-            message = "Chaque face doit avoir un poids unique."
-            return
-        }
-
         // Validation : Valeurs de faces uniques
         val faceValues = editableFaces.map { it.faceValue.trim() }
         if (faceValues.any { it.isEmpty() }) {
