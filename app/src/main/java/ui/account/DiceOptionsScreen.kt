@@ -42,30 +42,17 @@ fun DiceOptionsScreen(
         NavItem("Lancer dés", Icons.Default.PlayArrow)
     )
 
-    var selectedIndex by remember {
-        mutableStateOf(0)
-    }
+    var selectedIndex by remember { mutableStateOf(0) }
 
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = Color(0xFFF4D27A)
-            ) {
+            NavigationBar(containerColor = Color(0xFFF4D27A)) {
                 navItemList.forEachIndexed { index, navItem ->
                     NavigationBarItem(
                         selected = index == selectedIndex,
-                        onClick = {
-                            selectedIndex = index
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = navItem.icon,
-                                contentDescription = navItem.label
-                            )
-                        },
-                        label = {
-                            Text(text = navItem.label)
-                        }
+                        onClick = { selectedIndex = index },
+                        icon = { Icon(navItem.icon, contentDescription = navItem.label) },
+                        label = { Text(text = navItem.label) }
                     )
                 }
             }
